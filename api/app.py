@@ -145,7 +145,7 @@ def get_country_city_coordinates():
     return result
 
 
-@app.post("/analyse/", tags=["Drought forecast of a site. To use the API, the following conditions must be met: 1) -1.5 <= spei_threshold <= -0.5. 2) Country and sitename are in the allowed list. 3) Month_to_forecast is in the range of1 to 6 months ahead of the current month."])
+@app.post("/forecast/drought", tags=["Drought forecast of a site. To use the API, the following conditions must be met: 1) -1.5 <= spei_threshold <= -0.5. 2) Country and sitename are in the allowed list. 3) Month_to_forecast is in the range of1 to 6 months ahead of the current month."])
 def analyse(item: Item):
     if item.spei_threshold < -1.5 or item.spei_threshold > -0.5:
         input_data = {
