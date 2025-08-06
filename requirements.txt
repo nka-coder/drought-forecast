@@ -1,0 +1,10 @@
+fastapi>=0.68.0
+requests>=2.30.0
+uvicorn>=0.15.0
+pandas==2.2.3
+numpy==1.23.5
+scikit-learn==1.2.2
+xgboost>=1.4.0
+boto3>=1.18.0
+botocore>=1.21.0
+imbalanced-learn
