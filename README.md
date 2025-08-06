@@ -99,7 +99,7 @@ curl -X POST "http://localhost:8000/forecast/flood" \
 
 ### AWS EC2 
 
-### Your local
+### Your local Docker server
 
 ## Troubleshooting
 
