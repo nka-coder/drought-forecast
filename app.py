@@ -145,7 +145,7 @@ def get_country_city_coordinates():
     return result
 
 
-@app.post("/analyse/", tags=["Drought forecast of a site. To use the API, the following condition must be met:  -1.5 < spei_threshold <-0.5"])
+@app.post("/analyse/", tags=["Drought forecast of a site. To use the API, the following conditions must be met: 1) -1.5 <= spei_threshold <= -0.5. 2) Country and sitename are in the allowed list. 3) Month_to_forecast is in the range of1 to 6 months ahead of the current month."])
 def analyse(item: Item):
     if item.spei_threshold < -1.5 or item.spei_threshold > -0.5:
         input_data = {
@@ -155,7 +155,7 @@ def analyse(item: Item):
         }
         data = {
             "input_data": input_data,
-            "warning": "spei_threshold is out of range. The following condition must be met:  -1.5 < spei_threshold <-0.5 "
+            "warning": "spei_threshold is out of range. The following condition must be met:  -1.5 <= spei_threshold <= -0.5 "
         }
         return data
 
@@ -169,60 +169,72 @@ def analyse(item: Item):
         diff_month = 1
 
     if diff_month <= 6 and diff_month > 1:
-        x_train,x_test,y_train,y_test = create_dataset(item.country, item.sitename, item.spei_threshold, diff_month)
+        try:
+            x_train,x_test,y_train,y_test = create_dataset(item.country, item.sitename, item.spei_threshold, diff_month)
 
-        m2_bin = str(bin(m2)[2:].zfill(4))
-        pmonth_bit = []
-        m1_bin = str(bin(m1)[2:].zfill(4))
-        month_bit = []
-        for i in range(4):
-            pmonth_bit.append(m2_bin[i])
-            month_bit.append(m1_bin[i])
+            m2_bin = str(bin(m2)[2:].zfill(4))
+            pmonth_bit = []
+            m1_bin = str(bin(m1)[2:].zfill(4))
+            month_bit = []
+            for i in range(4):
+                pmonth_bit.append(m2_bin[i])
+                month_bit.append(m1_bin[i])
 
-        today = datetime.now()
-        last_month = today.replace(day=1) - timedelta(days=1)
-        year = last_month.year
-        precipitation, temperature = get_monthly_weather(item.country, item.sitename, year, m1)
-        data_in = { 
-            "temperature": temperature,
-            "precipitations" : precipitation, 
-            "pmonth_bit_0" : pmonth_bit[0], 
-            "pmonth_bit_1": pmonth_bit[1], 
-            "pmonth_bit_2": pmonth_bit[2], 
-            "pmonth_bit_3": pmonth_bit[3],
-            "month_bit_0": month_bit[0], 
-            "month_bit_1": month_bit[1], 
-            "month_bit_2": month_bit[2], 
-            "month_bit_3": month_bit[3]
-        }
-        df_in = pd.DataFrame([data_in])
+            today = datetime.now()
+            last_month = today.replace(day=1) - timedelta(days=1)
+            year = last_month.year
+            precipitation, temperature = get_monthly_weather(item.country, item.sitename, year, m1)
+            data_in = { 
+                "temperature": temperature,
+                "precipitations" : precipitation, 
+                "pmonth_bit_0" : pmonth_bit[0], 
+                "pmonth_bit_1": pmonth_bit[1], 
+                "pmonth_bit_2": pmonth_bit[2], 
+                "pmonth_bit_3": pmonth_bit[3],
+                "month_bit_0": month_bit[0], 
+                "month_bit_1": month_bit[1], 
+                "month_bit_2": month_bit[2], 
+                "month_bit_3": month_bit[3]
+            }
+            df_in = pd.DataFrame([data_in])
 
-        model, model_name, accuracy, precision, recall, specificity = create_model(x_train, y_train, x_test, y_test)
-        y_pred = model.predict(df_in)
+            model, model_name, accuracy, precision, recall, specificity = create_model(x_train, y_train, x_test, y_test)
+            y_pred = model.predict(df_in)
 
-        #if int(y_pred[0])==2:
-            #forcast = "extreme drought"
+            #if int(y_pred[0])==2:
+                #forcast = "extreme drought"
 
-        if int(y_pred[0])==1:
-            forcast = "drought"
+            if int(y_pred[0])==1:
+                forcast = "drought"
 
-        if int(y_pred[0])==0:
-            forcast = "no drought"
-        input_data = {
-            "sitename" : item.sitename,
-            "spei_threshold" : item.spei_threshold,
-            "month_to_forecast" : item.month_to_forcast
-        }
-        data = {
-            "forecast": forcast,
-            "recall": recall,
-            "specificity": specificity,
-            "accuracy": accuracy,
-            "precision": precision,
-            "model_name": model_name,
-            "input_data": input_data,
-            "warning":""
-        }
+            if int(y_pred[0])==0:
+                forcast = "no drought"
+            input_data = {
+                "sitename" : item.sitename,
+                "spei_threshold" : item.spei_threshold,
+                "month_to_forecast" : item.month_to_forcast
+            }
+            data = {
+                "forecast": forcast,
+                "recall": recall,
+                "specificity": specificity,
+                "accuracy": accuracy,
+                "precision": precision,
+                "model_name": model_name,
+                "input_data": input_data,
+                "warning":""
+            }
+        except:
+            input_data = {
+                "sitename" : item.sitename,
+                "spei_threshold" : item.spei_threshold,
+                "month_to_forecast" : item.month_to_forcast
+            }
+            data = {
+                "input_data": input_data,
+                "warning": "An error occured. The SPEI_THRESOLD value provided might not be supported. Increase or decrease the SPEI_THRESHOLD within the allowed range"
+            }
+            return data
     else:
         input_data = {
             "sitename" : item.sitename,
