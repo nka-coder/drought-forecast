@@ -83,9 +83,9 @@ curl http://localhost:8000/health
 curl http://localhost:8000/site-list
 ```
 
-### Get Flood Forecast
+### Get Drought Forecast
 ```bash
-curl -X POST "http://localhost:8000/forecast/flood" \
+curl -X POST "http://localhost:8000/forecast/drought" \
   -H "Content-Type: application/json" \
   -d '{"country": "cameroon", "sitename": "douala", "spei_threshold": -1.0, "month_to_forcast": 10}'
 ```
